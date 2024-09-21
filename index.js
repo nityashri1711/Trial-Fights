@@ -1,5 +1,12 @@
 const socket = io.connect("http://localhost:4000")
 
+let music = new Audio("upbeat-126503.mp3")
+let sword = new Audio("sword-sound-effect-2-full-pack-link-in-comments-234986_TilKiFc3.mp3")
+let running = new Audio("running-sounds-6003.mp3")
+let death = new Audio("person-knocked-down-14798.mp3")
+
+
+
 const canvas = document.querySelector('canvas')
 const c = canvas.getContext('2d')
 canvas.width = 1024
@@ -154,6 +161,9 @@ const enemy = new Fighter({
 
 console.log(player);
 
+let playerDead = false;
+let enemyDead = false;
+
 //Synchronize player and enemy state using socket.io
 socket.on('playerUpdate', (data) => {
     player.position = data.position
@@ -197,11 +207,6 @@ socket.on('gameOver', (message) => {
     // Optionally, handle resetting or ending the game here
 });
 
-/*socket.on('chatMessage', (message) => {
-    const messageElement = document.createElement('p');
-    messageElement.textContent = message;
-    messages.appendChild(messageElement);
-});*/
 socket.on('chatMessage', ({ username: sender, message }) => {
     const messageElement = document.createElement('p');
 
@@ -252,6 +257,14 @@ const keys = {
 
 decreaseTimer()
 
+//Start BGM
+document.addEventListener('click', () => {
+    music.loop = true; // Loop the music
+    music.volume = 0.3; // Set volume
+    music.play().catch(error => {
+        console.log("Audio playback failed: ", error);
+    });
+});
 
 function animate(){
     window.requestAnimationFrame(animate)
@@ -267,17 +280,29 @@ function animate(){
     player.velocity.x = 0
     enemy.velocity.x = 0
 
+    //Running sound
+    let isRunningSoundPlaying = false;
+
     //player movement
     
     if(keys.a.pressed && player.lastKey === 'a'){
         player.velocity.x = -5
         player.switchSprite('run')
-
+        if (!isRunningSoundPlaying) {
+            running.play();
+            isRunningSoundPlaying = true;
+        }
     } else if (keys.d.pressed && player.lastKey === 'd'){
         player.velocity.x = 5
         player.switchSprite('run')
+        if (!isRunningSoundPlaying) {
+            running.play();
+            isRunningSoundPlaying = true;
+        }
     } else {
         player.switchSprite('idle')
+        running.pause();
+        isRunningSoundPlaying = false;
     }
 
     //jumping
@@ -291,11 +316,21 @@ function animate(){
     if(keys.ArrowLeft.pressed && enemy.lastKey === 'ArrowLeft'){
         enemy.velocity.x = -5
         enemy.switchSprite('run')
+        if (!isRunningSoundPlaying) {
+            running.play();
+            isRunningSoundPlaying = true;
+        }
     } else if (keys.ArrowRight.pressed && enemy.lastKey === 'ArrowRight'){
         enemy.velocity.x = 5
         enemy.switchSprite('run')
+        if (!isRunningSoundPlaying) {
+            running.play();
+            isRunningSoundPlaying = true;
+        }
     } else {
         enemy.switchSprite('idle')
+        running.pause();
+        isRunningSoundPlaying = false;
     }
 
 
@@ -318,6 +353,7 @@ function animate(){
     )   {
         enemy.takeHit()
         player.isAttacking = false
+        sword.play();
         
         gsap.to('#enemyHealth', {
             width : enemy.health + '%'
@@ -340,6 +376,7 @@ function animate(){
     )   {
         player.takeHit()
         enemy.isAttacking = false
+        sword.play();
 
         gsap.to('#playerHealth', {
             width : player.health + '%'
@@ -354,9 +391,18 @@ function animate(){
 
 
     //end game based on health
-    if(enemy.health <= 0 || player.health <= 0){
-        determineWinner({player, enemy, timerId})
+    if (enemy.health <= 0 && !enemyDead) {
+        enemyDead = true; 
+        death.play(); // Play death sound
+        determineWinner({ player, enemy, timerId });
     }
+
+    if (player.health <= 0 && !playerDead) {
+        playerDead = true; 
+        death.play(); // Play death sound
+        determineWinner({ player, enemy, timerId });
+    }
+
     /*nitya added*/
     socket.emit('playerState', {
         position : player.position,
@@ -373,20 +419,6 @@ function animate(){
 }
 
 
-//Emit player and enemy state to the server
-/* nitya commented
-socket.emit('playerState', {
-    position : player.position,
-    velocity : player.velocity,
-    currentSprite : player.sprites
-})
-
-socket.emit('enemyState', {
-    position : enemy.position,
-    velocity : enemy.velocity,
-    currentSprite : enemy.sprites
-})
-*/
 
 animate()
 // ADDED BY NITYA
@@ -422,6 +454,7 @@ window.addEventListener('keydown', (event) => {
                 break    
             case ' ' :
                 player.attack();
+                sword.play();
                 //ADDED BY NITYA
                 socket.emit('playerAttack', {
                     playerId: 'player',
@@ -471,6 +504,7 @@ window.addEventListener('keyup', (event) => {
             break 
         case 'ArrowDown':
             enemy.attack();
+            sword.play();
             //ADDED BY NITYA
             socket.emit('playerAttack', {
                 playerId: 'enemy',

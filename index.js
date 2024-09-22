@@ -1,4 +1,4 @@
-const socket = io.connect("https://trial-fights-production.up.railway.app/")
+const socket = io.connect("https://localhost:4000")
 
 let music = new Audio("upbeat-126503.mp3")
 let sword = new Audio("sword-sound-effect-2-full-pack-link-in-comments-234986_TilKiFc3.mp3")

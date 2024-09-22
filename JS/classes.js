@@ -127,13 +127,25 @@ class Fighter extends Sprite{
        
     }
 
-    takeHit(){
-        this.health -= 20
+    takeHit() {
+    this.health -= 20;
 
-        if (this.health <= 0){
-            this.switchSprite('death')
-        } else this.switchSprite('takeHit')
+    // Load the 'takeHit' image
+    const hitImage = new Image();
+    hitImage.src = 'kenji/Take Hit.png'; // Correct path
+
+    hitImage.onload = () => {
+        this.switchSprite('takeHit'); // Switch to the 'takeHit' sprite after the image loads
+    };
+
+    hitImage.onerror = () => {
+        console.error('Failed to load hit image at', hitImage.src);
+    };
+
+    if (this.health <= 0) {
+        this.switchSprite('death');
     }
+}
 
     switchSprite(sprite){
         if (this.image === this.sprites.death.image) {

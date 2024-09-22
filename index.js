@@ -1,4 +1,4 @@
-const socket = io.connect("http://localhost:4000")
+const socket = io.connect("window.location.origin")
 
 let music = new Audio("upbeat-126503.mp3")
 let sword = new Audio("sword-sound-effect-2-full-pack-link-in-comments-234986_TilKiFc3.mp3")
